@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connect Four</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f4f4f4;
+        }
+
+        #game-board {
+            display: grid;
+            grid-template-columns: repeat(7, 60px);
+            grid-template-rows: repeat(6, 60px);
+            gap: 5px;
+        }
+
+        .cell {
+            width: 60px;
+            height: 60px;
+            background-color: #3498db;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .cell.empty {
+            background-color: #ecf0f1;
+        }
+
+        .cell.red {
+            background-color: red;
+        }
+
+        .cell.yellow {
+            background-color: yellow;
+        }
+
+        #status {
+            margin: 20px;
+            font-size: 1.5rem;
+        }
+
+        #restart {
+            padding: 10px 20px;
+            font-size: 1rem;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Connect Four</h1>
+    <div id="game-board"></div>
+    <h2 id="status"></h2>
+    <button id="restart">Restart</button>
+    <script>
+        // Game variables
+        const columns = 7;
+        const rows = 6;
+        let board = [];
+        let currentPlayer = 'R'; // Red starts first
+        let isGameActive = true;
+
+        // DOM elements
+        const gameBoard = document.getElementById('game-board');
+        const statusDisplay = document.getElementById('status');
+        const restartButton = document.getElementById('restart');
+
+        // Initialize game board
+        function createBoard() {
+            board = Array(rows).fill(null).map(() => Array(columns).fill(null));
+            gameBoard.innerHTML = '';
+
+            for (let row = 0; row < rows; row++) {
+                for (let col = 0; col < columns; col++) {
+                    const cell = document.createElement('div');
+                    cell.classList.add('cell', 'empty');
+                    cell.setAttribute('data-row', row);
+                    cell.setAttribute('data-col', col);
+                    cell.addEventListener('click', handleCellClick);
+                    gameBoard.appendChild(cell);
+                }
+            }
+
+            statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+        }
+
+        // Handle cell click
+        function handleCellClick(event) {
+            if (!isGameActive) return;
+
+            const col = parseInt(event.target.getAttribute('data-col'));
+
+            // Find the lowest empty cell in the column
+            for (let row = rows - 1; row >= 0; row--) {
+                if (!board[row][col]) {
+                    board[row][col] = currentPlayer;
+                    const cell = document.querySelector(`[data-row="${row}"][data-col="${col}"]`);
+                    cell.classList.remove('empty');
+                    cell.classList.add(currentPlayer === 'R' ? 'red' : 'yellow');
+
+                    // Check for winner after the move
+                    checkForWinner(row, col);
+                    if (!isGameActive) return;
+
+                    // Switch player
+                    currentPlayer = currentPlayer === 'R' ? 'Y' : 'R';
+                    statusDisplay.textContent = `Player ${currentPlayer}'s turn`;
+                    return;
+                }
+            }
+        }
+
+        // Check for a winner after each move
+        function checkForWinner(row, col) {
+            if (checkDirection(row, col, 1, 0) || // Horizontal
+                checkDirection(row, col, 0, 1) || // Vertical
+                checkDirection(row, col, 1, 1) || // Diagonal down-right
+                checkDirection(row, col, 1, -1)) { // Diagonal down-left
+                statusDisplay.textContent = `Game Over! Player ${currentPlayer} has won!`;
+                isGameActive = false;
+            } else if (board.flat().every(cell => cell !== null)) {
+                statusDisplay.textContent = 'Game Over! It\'s a draw!';
+                isGameActive = false;
+            }
+        }
+
+        // Check cells in a specific direction
+        function checkDirection(row, col, rowDirection, colDirection) {
+            let count = 0;
+
+            for (let i = -3; i <= 3; i++) {
+                const newRow = row + i * rowDirection;
+                const newCol = col + i * colDirection;
+
+                if (newRow >= 0 && newRow < rows && newCol >= 0 && newCol < columns &&
+                    board[newRow][newCol] === currentPlayer) {
+                    count++;
+                    if (count === 4) {
+                        return true;
+                    }
+                } else {
+                    count = 0;
+                }
+            }
+
+            return false;
+        }
+
+        // Restart the game
+        function restartGame() {
+            currentPlayer = 'R'; // Red starts first
+            isGameActive = true;
+            createBoard();
+        }
+
+        // Event listeners
+        restartButton.addEventListener('click', restartGame);
+
+        // Start the game
+        createBoard();
+    </script>
+</body>
+</html>
